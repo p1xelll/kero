@@ -455,6 +455,9 @@ func TestTailnetAddr(t *testing.T) {
 // The bridge's sh finds kero where it looks, a path with a space too, and
 // says when there is none.
 func TestBridgeScript(t *testing.T) {
+	locations := BridgeLocations
+	t.Cleanup(func() { BridgeLocations = locations })
+	BridgeLocations = []string{`$HOME/.local/bin/kero`, `$HOME/Library/Application Support/kero/bin/kero`, `kero`}
 	if runtime.GOOS == "windows" {
 		t.Skip("sh of Windows takes no Unix paths")
 	}
