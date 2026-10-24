@@ -350,12 +350,12 @@ func (c *cmdConn) Write(p []byte) (int, error) { return c.stdin.Write(p) }
 func (c *cmdConn) Close() error {
 	c.once.Do(func() {
 		c.stdin.Close()
+		c.ended()
 		select {
-		case <-c.eof:
+		case <-c.done:
 		case <-time.After(500 * time.Millisecond):
 			c.cmd.Process.Kill()
 		}
-		c.ended()
 	})
 	return nil
 }
