@@ -136,6 +136,7 @@ var actionWords = map[string]string{
 	"pane.up":           "focus move navigate above",
 	"pane.down":         "focus move navigate below",
 	"sidebar.toggle":    "show hide sidebar sessions list",
+	"side.toggle":       "side panel toggle show hide close",
 	"changes.toggle":    "git diff branch panel changes",
 	"files.toggle":      "file tree browser folder explore panel",
 	"pet.toggle":        "frog kero mascot sprite show hide pet companion 小青蛙 精灵 宠物",

@@ -3650,6 +3650,16 @@ func (msgs Messages) ActionToggleChanges() string {
 	return Catalog.Format(msgs.locale, "actionToggleChanges", nil)
 }
 
+// ActionTogglePanel says "Toggle Side Panel"
+// in the language the app shows.
+func ActionTogglePanel() string { return In(i18n.Locale()).ActionTogglePanel() }
+
+// ActionTogglePanel says "Toggle Side Panel"
+// in the language of msgs.
+func (msgs Messages) ActionTogglePanel() string {
+	return Catalog.Format(msgs.locale, "actionTogglePanel", nil)
+}
+
 // ActionToggleFiles says "Toggle Files"
 // in the language the app shows.
 func ActionToggleFiles() string { return In(i18n.Locale()).ActionToggleFiles() }

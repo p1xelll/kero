@@ -41,6 +41,7 @@ const (
 type sideState struct {
 	drag    float32 // the width as a drag of the edge began, 0 while none
 	focused bool    // the panel has the keyboard: its Escape, its diff's find
+	view    string  // the view shown last, kept as the panel closes
 	changes changesState
 	files   filesState
 	// theme is the diffs' colors, made again only as the window's
@@ -92,17 +93,42 @@ type sideFile struct {
 	err        string
 }
 
-// toggleSide shows a view of the panel, or hides the panel when it shows
-// it.
+// toggleSide opens or closes the panel, whatever its view: it shows the
+// view the user saw last, or view when it shows the other one.
 func (a *App) toggleSide(view string) {
-	if a.prefs.Side == view {
-		a.prefs.Side = ""
+	switch {
+	case a.prefs.Side == "":
+		// Closed: it opens on the view seen last, or on view.
+		v := a.side.view
+		if v == "" {
+			v = view
+		}
+		if v == "" {
+			v = sideChanges
+		}
+		a.side.view, a.prefs.Side = v, v
+	case view == "" || a.prefs.Side == view:
+		a.side.view, a.prefs.Side = a.prefs.Side, ""
 		a.side.focused = false
 		a.focusTerminal()
-	} else {
+	default:
+		// Another view chosen: the panel turns to it.
+		a.side.view = view
 		a.prefs.Side = view
 	}
 	a.savePrefs()
+}
+
+// sideView is the view the panel shows, or would show when opened: the
+// last it showed, Changes for none.
+func (a *App) sideView() string {
+	if a.prefs.Side != "" {
+		return a.prefs.Side
+	}
+	if a.side.view != "" {
+		return a.side.view
+	}
+	return sideChanges
 }
 
 // showSide shows a view of the panel, keeping it open when it shows it.
@@ -158,14 +184,11 @@ func (a *App) sidePanel(c *ui.Context, pal *palette, s *proto.Session, width flo
 		Focusable().Bind(a.paneRef("side-card"))
 	raised(card, pal)
 	a.side.focused = card.FocusWithin()
-	view, set := a.prefs.Side, ""
+	view, set := a.sideView(), ""
 	card.Children(func() {
 		ui.Row(c.Key("hdr")).Height(headerH).Shrink(0).AlignItems(ui.Center).Padding(0, 10, 0, 16).Gap(8).Children(func() {
 			// The views, the one shown marked, as a pane's header shows
 			// its program.
-			if view != sideFiles {
-				view = sideChanges
-			}
 			a.sideTab(c, pal, sideChanges, locales.SideChanges(), diffIcon, view == sideChanges, "changes.toggle", func() { set = sideChanges })
 			a.sideTab(c, pal, sideFiles, locales.SideFiles(), folderIcon, view == sideFiles, "files.toggle", func() { set = sideFiles })
 			if set != "" {
@@ -175,7 +198,7 @@ func (a *App) sidePanel(c *ui.Context, pal *palette, s *proto.Session, width flo
 				ui.Text(c, a.hostOf(s.ID).shortDir(dir)).FontSize(13).TextColor(pal.textFaint).SingleLine().Ellipsis("…").Shrink(2).MinWidth(0).Tooltip(dir)
 			}
 			ui.Box(c.Key("drag")).Grow(1).AlignSelf(ui.Stretch).DragWindow()
-			iconButton(c, "close-side", closeIcon, a.tip(locales.SideClose(), "changes.toggle"), pal, func() { a.defer_(func() { a.toggleSide(a.prefs.Side) }) })
+			iconButton(c, "close-side", closeIcon, a.tip(locales.SideClose(), "side.toggle"), pal, func() { a.defer_(func() { a.toggleSide("") }) })
 			if right {
 				windowControls(c, pal, a.win)
 			}
@@ -218,7 +241,7 @@ func (a *App) sideTab(c *ui.Context, pal *palette, id, label string, svg *ui.SVG
 // sideDir is the folder a view names in the header: the worktree the
 // Changes view lists, or the folder the Files view shows.
 func (a *App) sideDir(s *proto.Session) string {
-	if a.prefs.Side == sideFiles {
+	if a.sideView() == sideFiles {
 		if _, root := a.filesRoot(s); root != "" {
 			return root
 		}

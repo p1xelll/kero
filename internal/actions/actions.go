@@ -54,6 +54,7 @@ var All = []Action{
 	{ID: "pane.down", Title: "Pane Below", Menu: "Pane", Keys: "CmdOrCtrl+Alt+Down", Remote: true},
 
 	{ID: "sidebar.toggle", Title: "Toggle Sidebar", Menu: "View", Keys: "CmdOrCtrl+B", Remote: true},
+	{ID: "side.toggle", Title: "Toggle Side Panel", Menu: "View", Keys: "CmdOrCtrl+Shift+E", Remote: true},
 	{ID: "changes.toggle", Title: "Toggle Changes", Menu: "View", Keys: "CmdOrCtrl+Alt+G", Remote: true},
 	{ID: "files.toggle", Title: "Toggle Files", Menu: "View", Keys: "CmdOrCtrl+Alt+F", Remote: true},
 	{ID: "pet.toggle", Title: "Toggle Kero", Menu: "View", Keys: "CmdOrCtrl+Shift+K"},
@@ -94,6 +95,7 @@ var pcKeys = map[string]string{
 	"pane.up":           "Alt+Up",
 	"pane.down":         "Alt+Down",
 	"sidebar.toggle":    "Ctrl+Shift+B",
+	"side.toggle":       "Ctrl+Shift+E",
 	"changes.toggle":    "Ctrl+Shift+G",
 	"files.toggle":      "Ctrl+Alt+F",
 	"pet.toggle":        "Ctrl+Shift+K",

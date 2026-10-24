@@ -113,3 +113,57 @@ func TestFileTreeRel(t *testing.T) {
 	}
 	_ = proto.FSList{}
 }
+
+// One shortcut opens the panel, on the view the user saw last, and the
+// same one closes it.
+func TestSideToggle(t *testing.T) {
+	a := testApp(t)
+	s := &a.st.Sessions[0]
+	s.Panes[0].ProcessDir, s.Panes[0].Git = "/tmp/demo", &proto.GitInfo{Root: "/tmp/demo", Branch: "main"}
+	s.Panes[1].Git = s.Panes[0].Git
+	// Connected: a panel that opens makes calls as it shows.
+	cl, _ := projectClient(t, func(method string, raw json.RawMessage) (any, error) {
+		return nil, errors.New("not in a test")
+	})
+	a.local().cl = cl
+	a.local().conn = connReady
+	pane, root := a.filesRoot(s)
+	a.tree(pane, root).dirs[root] = &fileDir{paths: []string{"/tmp/demo/main.go"}}
+	tt := ui.NewTester(a.view, 1280, 720)
+	if !a.fromMay("side.toggle", nil) {
+		t.Fatal("side.toggle refused for the session shown")
+	}
+
+	a.run("side.toggle", nil)
+	tt.Frame()
+	if a.prefs.Side != sideChanges {
+		t.Fatalf("the panel opened on %q (conn %d, session %v)", a.prefs.Side, a.local().conn, a.session(a.selected) != nil)
+	}
+	// Files chosen in the header: the panel keeps it as it closes, and
+	// opens on it again.
+	a.showSide(sideFiles)
+	tt.Frame()
+	a.run("side.toggle", nil)
+	tt.Frame()
+	if a.prefs.Side != "" || a.sideView() != sideFiles {
+		t.Fatalf("the panel closed on %q, remembering %q", a.prefs.Side, a.sideView())
+	}
+	a.run("side.toggle", nil)
+	tt.Frame()
+	if a.prefs.Side != sideFiles || !tt.HasText("main.go") {
+		t.Errorf("the panel opened on %q, texts %q", a.prefs.Side, tt.Texts())
+	}
+	// The view's own shortcut opens it when closed, and turns to it when
+	// the other shows.
+	a.run("side.toggle", nil)
+	a.showSide(sideChanges)
+	a.run("files.toggle", nil)
+	tt.Frame()
+	if a.prefs.Side != sideFiles {
+		t.Errorf("files.toggle showed %q", a.prefs.Side)
+	}
+	a.run("files.toggle", nil)
+	if a.prefs.Side != "" {
+		t.Errorf("files.toggle left the panel open on %q", a.prefs.Side)
+	}
+}

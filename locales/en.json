@@ -500,6 +500,7 @@
   "findNoMatches": "No matches",
   "findClose": "Close Find Bar",
   "actionToggleChanges": "Toggle Changes",
+  "actionTogglePanel": "Toggle Side Panel",
   "actionToggleFiles": "Toggle Files",
   "actionTogglePet": "Toggle Kero",
   "sideChanges": "Changes",
