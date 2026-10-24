@@ -32,7 +32,7 @@ func TestSidePanel(t *testing.T) {
 
 	// What kerod would answer.
 	ch := &a.side.changes
-	turnScope := changesScope(&s.Panes[0], git.BaseTurn)
+	turnScope := a.changesScope(&s.Panes[0], git.BaseTurn)
 	ch.base, ch.scope, ch.stamp = git.BaseTurn, turnScope, gitStamp(g)+"|abc"
 	ch.res = &proto.GitChanges{Root: "/tmp/demo", Files: []proto.GitFile{
 		{Path: "internal/auth/login.go", Status: "modified", Added: 30, Removed: 2},
@@ -209,8 +209,8 @@ func TestChangesFollowWorktree(t *testing.T) {
 	s.Panes[0].Git, s.Panes[1].Git = g, g
 	a.prefs.Side = sideChanges
 	ch := &a.side.changes
-	scope := changesScope(&s.Panes[0], git.BaseHead)
-	if scope != changesScope(&s.Panes[1], git.BaseHead) {
+	scope := a.changesScope(&s.Panes[0], git.BaseHead)
+	if scope != a.changesScope(&s.Panes[1], git.BaseHead) {
 		t.Fatal("two panes of one worktree list different changes")
 	}
 	ch.base, ch.scope, ch.stamp = git.BaseHead, scope, gitStamp(g)
@@ -259,7 +259,7 @@ func TestStickyHeaderStaysInList(t *testing.T) {
 	s.Panes[0].Git, s.Panes[1].Git = g, g
 	a.prefs.Side = sideChanges
 	ch := &a.side.changes
-	scope := changesScope(&s.Panes[0], git.BaseHead)
+	scope := a.changesScope(&s.Panes[0], git.BaseHead)
 	ch.base, ch.scope, ch.stamp = git.BaseHead, scope, gitStamp(g)
 	ch.res = &proto.GitChanges{Root: "/tmp/demo"}
 	for _, n := range []string{"a.go", "b.go", "c.go"} {
@@ -322,7 +322,7 @@ func TestStickyHeaderAsFoldShortensList(t *testing.T) {
 	s.Panes[0].Git, s.Panes[1].Git = g, g
 	a.prefs.Side = sideChanges
 	ch := &a.side.changes
-	scope := changesScope(&s.Panes[0], git.BaseHead)
+	scope := a.changesScope(&s.Panes[0], git.BaseHead)
 	ch.base, ch.scope, ch.stamp = git.BaseHead, scope, gitStamp(g)
 	ch.res = &proto.GitChanges{Root: "/tmp/demo"}
 	names := []string{"a.go", "b.go", "c.go"}
