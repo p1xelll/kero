@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -55,10 +56,30 @@ func TestHookInstallKeepsSettings(t *testing.T) {
 	if i, j, k := strings.Index(got, `"model"`), strings.Index(got, `"hooks"`), strings.Index(got, `"env"`); !(i < j && j < k) {
 		t.Fatalf("keys out of order:\n%s", got)
 	}
-	for _, want := range []string{`"say done"`, `"echo hi"`, `"matcher": "startup"`, `"timeout": 10`, "kero home/bin/kero' hook claude"} {
+	for _, want := range []string{`"say done"`, `"echo hi"`, `"matcher": "startup"`, `"timeout": 10`} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("no %s in:\n%s", want, got)
 		}
+	}
+	var installed struct {
+		Hooks map[string][]struct {
+			Hooks []struct{ Command string }
+		}
+	}
+	if err := json.Unmarshal([]byte(got), &installed); err != nil {
+		t.Fatal(err)
+	}
+	groups := installed.Hooks["SessionStart"]
+	if len(groups) != 2 || len(groups[1].Hooks) != 1 {
+		t.Fatalf("install().hooks.SessionStart = %+v, want the original group and one Kero hook", groups)
+	}
+	exe := filepath.Join(os.Getenv("KERO_HOME"), "bin", "kero")
+	wantCommand := "'" + strings.ReplaceAll(exe, "'", `'\''`) + "' hook claude"
+	if runtime.GOOS == "windows" {
+		wantCommand = `"` + exe + `.exe" hook claude`
+	}
+	if command := groups[1].Hooks[0].Command; command != wantCommand {
+		t.Errorf("install().command = %q, want %q", command, wantCommand)
 	}
 	if err := h.install(); err != nil {
 		t.Fatal(err)
@@ -127,7 +148,7 @@ func TestHookRefusesBadSettings(t *testing.T) {
 // Pi's and OpenCode's plugins go in when the agent is installed, run
 // Kero's own kero command, and come out whole.
 func TestAgentPlugins(t *testing.T) {
-	home := t.TempDir()
+	home := filepath.Join(t.TempDir(), "agent home & plugins")
 	t.Setenv("HOME", home)
 	t.Setenv("KERO_HOME", filepath.Join(home, "kero"))
 	for _, env := range []string{"CLAUDE_CONFIG_DIR", "CODEX_HOME", "PI_CODING_AGENT_DIR", "XDG_CONFIG_HOME"} {
@@ -147,6 +168,16 @@ func TestAgentPlugins(t *testing.T) {
 	if got := strings.Join(names(), ","); got != "claude,pi,opencode" {
 		t.Fatalf("with Pi and OpenCode: %s", got)
 	}
+	exe := filepath.Join(home, "kero", "bin", "kero")
+	if runtime.GOOS == "windows" {
+		exe += ".exe"
+	}
+	var quotedExe strings.Builder
+	encoder := json.NewEncoder(&quotedExe)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(exe); err != nil {
+		t.Fatal(err)
+	}
 	for _, it := range agentHooks("agents") {
 		if it.state() != "missing" {
 			t.Fatalf("%s: %s before install", it.name(), it.state())
@@ -160,7 +191,7 @@ func TestAgentPlugins(t *testing.T) {
 		p := it.(agentPlugin)
 		for name := range p.files {
 			b := read(t, filepath.Join(p.dir, name))
-			if strings.Contains(b, "__KERO__") || name != "package.json" && !strings.Contains(b, filepath.Join(home, "kero", "bin", "kero")) {
+			if strings.Contains(b, "__KERO__") || name != "package.json" && !strings.Contains(b, strings.TrimSpace(quotedExe.String())) {
 				t.Fatalf("%s/%s runs no kero:\n%s", it.name(), name, b)
 			}
 		}
