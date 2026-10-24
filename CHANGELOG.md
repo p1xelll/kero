@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.1.13-smallnest
+
+This is smallnest's fork of Kero. It has these changes on top of 2.1.12:
+
+- Open a project by dropping a folder into the sidebar: drop one or more
+  folders on it, and Kero opens a session in each project not open yet.
+  Files, folders it cannot read and macOS app bundles are refused, and
+  folders always open on this computer, also with a remote session
+  selected. Thanks @p1xelll
+- Kero the frog sits on the window's edge: it hops when a session needs
+  you, reads along while an agent works, and dozes when all is calm.
+  Drag it along the edge, or turn it off in **Settings › Appearance**.
+- A **Sort and Group** menu in the sidebar orders sessions by when they
+  were created, and groups them by project, with a colored initial for
+  each project. Drag a project's name to reorder the sidebar, and fold a
+  project to hide its sessions.
+- **Settings › Appearance › Background opacity** goes from 0% to 100%,
+  with a blur toggle, so the window can be see-through or solid.
+- A new setting `quit-ends-sessions` ends this computer's sessions, and
+  their programs, when you quit Kero, as **Quit and End All Sessions**
+  does. Other computers' sessions keep running.
+- Remote hosts find `kero` when the path to it has a space in it, on
+  macOS and Windows, whose `sh` is bash and splits a list of paths at
+  spaces.
+
 ## 2.1.12
 
 - Pasting an image alone, such as a screenshot, into a pane pastes the
