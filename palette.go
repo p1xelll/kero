@@ -272,7 +272,10 @@ func confirmDialog(c *ui.Context, pal *palette, pending **confirmation) bool {
 				// Return may be what a program reads, so this question
 				// takes a click: the focus goes to Cancel, which Space
 				// takes and Return does not.
-				buttonEl(c, "cancel", locales.CommonCancel(), "esc", false, pal).AutoFocus()
+				c.OnShortcut(0, ui.KeyEnter, func() {})
+				if buttonEl(c, "cancel", locales.CommonCancel(), "esc", false, pal).AutoFocus().Clicked() {
+					cf.open = false
+				}
 				if button(c, "ok", cf.action, "", true, pal) {
 					run = true
 				}

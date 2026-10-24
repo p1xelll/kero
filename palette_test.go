@@ -54,3 +54,34 @@ func TestPaletteScrolls(t *testing.T) {
 		t.Errorf("the wheel scrolled the palette to %g, want 300", y)
 	}
 }
+
+func TestCancelEndingConfirmation(t *testing.T) {
+	a := testApp(t)
+	ran := false
+	a.confirm = &confirmation{
+		open: true, ends: true, title: "End programs?", action: "End programs",
+		run: func() { ran = true },
+	}
+	tt := ui.NewTester(a.view, 1100, 640)
+	tt.Frame()
+	tt.Key(0, ui.KeyEnter)
+	tt.Frame()
+	if a.confirm == nil || ran {
+		t.Fatal("Return answered a confirmation that requires a click")
+	}
+	tt.Key(0, ui.KeyTab)
+	tt.Frame()
+	tt.Key(0, ui.KeyEnter)
+	tt.Frame()
+	if a.confirm == nil || ran {
+		t.Fatal("Return answered a confirmation after moving focus")
+	}
+	if err := tt.Click(locales.CommonCancel()); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if a.confirm != nil || ran {
+		t.Errorf("Cancel left confirmation = %+v, ran = %v, want nil and false", a.confirm, ran)
+	}
+	tt.Frame()
+}
