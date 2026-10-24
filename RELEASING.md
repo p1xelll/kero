@@ -37,7 +37,11 @@ themselves: their users install one of these releases once.
 ## Steps
 
 1. Pick the version: a patch (2.1.4 → 2.1.5) for fixes and small
-   changes, a minor for features.
+   changes, a minor for features. The version of this fork is above
+   upstream's latest, so no tag here shares a number with an upstream
+   tag, which would make the update key of one repository sign the
+   release of the other. Upstream's notes that a release takes in follow
+   the fork's own in `CHANGELOG.md`.
 2. Set it in `mygo.json` (`"version"`).
 3. Add its section to the top of `CHANGELOG.md`: what changed since the
    last release (`git log vX.Y.Z..HEAD`), for the people who use Kero,

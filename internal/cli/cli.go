@@ -61,6 +61,17 @@ Usage:
                                 reaches one of the statuses), print it
       -x, --exit                  instead wait for the command it started
                                   with to end, exit with its status
+  kero events [target] [-p project] [--for statuses] [--json]
+                                print what happens as it does, a line an
+                                event: panes changing status, sessions
+                                and panes starting and closing, renames,
+                                moves to another project, notifications;
+                                until the target closes
+      --for <statuses>            only panes going to these: idle,
+                                  working, waiting, error, exited
+      --once                      exit after the first event (1 if the
+                                  target closes or the timeout comes first)
+      -t, --timeout <dur>         stop watching after this long
   kero status [target] [--json]
   kero diff [target] [--turn | --branch] [path…]
                                 the changes in the pane's git worktree, as
@@ -77,6 +88,8 @@ Usage:
       back, forward, reload       and wait for the page to load
       text [selector]             print the page's text, or an element's
       html [selector]             print the page's HTML, or an element's
+      snapshot [selector]         print what the page shows: roles, names,
+                                  and a ref for each element
       click <selector>            click an element
       type <selector> <text…>     type text into a field, in place of what
                                   it holds (--enter: press Enter after it)
@@ -84,6 +97,12 @@ Usage:
                                   to), or without either, the page to load
       eval <js…>                  run JavaScript, print its value
       screenshot [-o file.png]    save a picture of the page, print where
+      cookies save [file]         save the browser's cookies (Playwright's
+                                  JSON, or cookies.txt for a .txt file)
+      cookies load <file>         load cookies from either
+      --ref <ref>                 a snapshot's element, in place of a
+                                  selector
+      --domain <domain>           cookies of a site and its subdomains
       -t, --timeout <dur>         how long to wait (default 10s)
   kero rename <session> <name>
   kero focus <target>           show a session (and pane) in the app
@@ -134,7 +153,7 @@ ambiguous one), 4 kerod unreachable.
 `
 
 // Commands lists the subcommands, which main sends here.
-var Commands = []string{"ls", "list", "new", "split", "send", "key", "prompt", "read", "capture", "wait", "status", "diff",
+var Commands = []string{"ls", "list", "new", "split", "send", "key", "prompt", "read", "capture", "wait", "events", "status", "diff",
 	"rename", "focus", "close", "kill", "restart", "notify", "report", "projects", "skill", "hook", "daemon", "do", "actions", "config",
 	"browser", "hosts", "clients", "__bridge", "-H", "--host", "help", "--help", "-h", "version", "--version"}
 
@@ -542,6 +561,9 @@ func run(args []string, host string) error {
 			return exitStatus(info.ExitCode)
 		}
 		return err
+
+	case "events":
+		return eventsCmd(c, st, args)
 
 	case "status":
 		f, err := parse(args, nil, map[string]string{"json": "json"})

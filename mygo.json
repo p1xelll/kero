@@ -1,7 +1,7 @@
 {
   "name": "Kero",
   "identifier": "sh.kero",
-  "version": "2.1.14",
+  "version": "2.1.18",
   "out": "build",
   "i18n": {
     "dir": "locales",
@@ -12,6 +12,12 @@
     "github": "smallnest/kero"
   },
   "macos": {
-    "signingIdentity": "-"
+    "signingIdentity": "-",
+    "entitlements": "entitlements.plist",
+    "infoPlist": {
+      "NSMicrophoneUsageDescription": "A program running in Kero would like to use the microphone.",
+      "NSCameraUsageDescription": "A program running in Kero would like to use the camera.",
+      "NSAppleEventsUsageDescription": "A program running in Kero would like to control another app."
+    }
   }
 }

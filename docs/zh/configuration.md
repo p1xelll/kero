@@ -48,13 +48,14 @@ kero config check             # 报告未知的配置项和无效的值
 | `restore-sessions`      | `true`    | kerod 重启后（例如开机后）重新启动之前的会话                   |
 | `resume-agents`         | `true`    | 会话重新启动时，恢复每个窗格中智能体的对话                    |
 | `quit-ends-sessions`    | `false`   | 退出 Kero（点关闭按钮、按 ⌘Q 或使用菜单）时，结束本机的全部会话及其中的程序并停止 kerod，与“退出并结束所有会话”相同；有程序在运行时，按 `confirm-close` 的设置先确认。其他机器上的会话继续运行（[详情](./sessions.md#退出)） |
+| `macos-show-app-icon`   | `dock-and-menubar` | 在 macOS 上显示 Kero 图标的位置：`dock-and-menubar`、`dock` 或 `menubar`。图标显示在菜单栏时，关闭窗口后 Kero 会继续在那里运行。Windows 和 Linux 上始终显示在通知区域，关闭窗口后同样会继续运行 |
 
 ## 外观
 
 | 配置项               | 默认值   | 说明                                                            |
 | -------------------- | -------- | --------------------------------------------------------------- |
 | `window-theme`       | `system` | 应用外观：`system`、`light` 或 `dark`                            |
-| `language`           | `system` | 应用语言：`system`、`en` 或 `zh-Hans`                            |
+| `language`           | `system` | 应用语言：`system`、`en`、`ja` 或 `zh-Hans`                      |
 | `background`         | `petal`  | 窗口底色：`petal`、`mist`、`meadow`、`dusk` 或 `plain`           |
 | `window-translucent` | `true`   | 让桌面透过窗口显示出来                                          |
 | `window-opacity`     | `0.82`   | 开启半透明时窗口背景的覆盖程度，0 到 1                        |

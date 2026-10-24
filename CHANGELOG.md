@@ -1,6 +1,20 @@
 # Changelog
 
-## 2.1.14
+This is smallnest's fork of Kero. A fork release takes a number above
+upstream's, so it never takes an upstream tag's number; the notes of the
+upstream releases it includes follow its own.
+
+## 2.1.18
+
+Not released yet.
+
+- A row above the tree sets what a click on a file of the Files view
+  does: show it under the tree, open it in a file pane with the app's
+  editor, or open it in the host's editor.
+- This release takes in upstream's 2.1.15 to 2.1.17, whose notes follow
+  this fork's own.
+
+## 2.1.14 (smallnest/kero)
 
 - The side panel has a **Files** view beside **Changes**: a tree of the
   session's folder, each file opening under it as its text, with syntax
@@ -16,9 +30,7 @@
   opens the panel on the view you saw last, and closes it. **Toggle
   Files** (⌥⌘F, Ctrl+Alt+F) goes straight to Files.
 
-## 2.1.13
-
-This is smallnest's fork of Kero. It has these changes on top of 2.1.12:
+## 2.1.13 (smallnest/kero)
 
 - Open a project by dropping a folder into the sidebar: drop one or more
   folders on it, and Kero opens a session in each project not open yet.
@@ -40,6 +52,56 @@ This is smallnest's fork of Kero. It has these changes on top of 2.1.12:
 - Remote hosts find `kero` when the path to it has a space in it, on
   macOS and Windows, whose `sh` is bash and splits a list of paths at
   spaces.
+
+## 2.1.17
+
+- Codex 0.164's panes resume their own conversations after kerod
+  restarts, now that one Codex app server runs every pane's hooks. On
+  another machine, this works once that host gets this update. Thanks
+  @voidyuu for the report
+- `kero browser snapshot` prints what a page shows as roles and names,
+  each element with a ref that `click`, `type` and the rest take with
+  `--ref`. `kero browser screenshot` works on a pane not on screen, and
+  `kero browser cookies save` and `load` keep a browser's sign-ins, as
+  Playwright's storage state or a `cookies.txt`.
+- With Kero's icon showing, Command+W and the close button close the
+  main window rather than hide it, and Kero keeps running in the menu
+  bar or the notification area.
+- macOS 27 no longer runs an AutoFill helper process for Kero.
+
+## 2.1.16
+
+- **Settings › General › Show app icon** on a Mac puts Kero in the Dock
+  and the menu bar, the Dock only, or the menu bar only. Windows and
+  Linux always show it in the notification area. Its menu opens Kero
+  and Settings and checks for updates. While the icon shows, closing
+  the window keeps Kero running there.
+- `kero events` prints what happens to sessions and panes as it
+  happens, such as a pane coming to need you, so a script can follow
+  every agent without polling `kero status`. On another machine, it
+  works once that host gets this update.
+- macOS no longer runs an AutoFill helper process for Kero.
+
+## 2.1.15
+
+- yazi's image previews show the image, not a box of placeholder
+  characters, locally and over SSH. Thanks @voidyuu for the report
+
+## 2.1.14
+
+- On a Mac, Command+Left and Command+Right go to the start and end of
+  the line in the shell, as in Ghostty. Thanks @eliottwantz
+- Kero speaks Japanese: pick it under **Language** in Settings.
+- Powerline's rounded separators in prompts fill the line's height,
+  with no gap when the line height is above 1.
+- On Linux, closing Settings no longer closes the app.
+
+## 2.1.13
+
+- Mouse clicks and drags work in herdr and other apps built on
+  crossterm, locally and over SSH.
+- Programs that change what Backspace or Alt sends, or how the keypad
+  works with NumLock, get the keys as they asked for them.
 
 ## 2.1.12
 

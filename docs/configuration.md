@@ -48,13 +48,14 @@ kero config check             # report unknown keys and bad values
 | `restore-sessions`      | `true`    | Start sessions again after kerod restarts, as after a reboot  |
 | `resume-agents`         | `true`    | As sessions start again, resume the conversation of the agent each pane ran |
 | `quit-ends-sessions`    | `false`   | Quitting, as with the close button, ⌘Q or the menu, ends this machine's sessions and their programs, and stops kerod, as Quit and End All Sessions does; it asks first, as `confirm-close` says, while a program runs. Other machines' sessions keep running ([more](./sessions.md#quitting)) |
+| `macos-show-app-icon`   | `dock-and-menubar` | Where Kero's icon shows on macOS: `dock-and-menubar`, `dock` or `menubar`. While it's in the menu bar, closing the window keeps Kero running there. Windows and Linux always show it in the notification area, where closing the window does the same |
 
 ## Appearance
 
 | Key                  | Default  | Description                                                     |
 | -------------------- | -------- | --------------------------------------------------------------- |
 | `window-theme`       | `system` | The app's appearance: `system`, `light` or `dark`               |
-| `language`           | `system` | The app's language: `system`, `en` or `zh-Hans`                 |
+| `language`           | `system` | The app's language: `system`, `en`, `ja` or `zh-Hans`           |
 | `background`         | `petal`  | The window's wash: `petal`, `mist`, `meadow`, `dusk` or `plain` |
 | `window-translucent` | `true`   | Let the desktop show through the window                         |
 | `window-opacity`     | `0.82`   | How much of the window's background the wash covers while translucent, 0 to 1 |

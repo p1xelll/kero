@@ -85,6 +85,38 @@ echo "go test exited with $?"
 
 命令结束后，窗格连同输出会保留下来，你可以用 `kero read` 读取。如果 shell 是 `cmd`，则无法等待命令结束，因为它判断不出命令何时结束。
 
+## 监听事件
+
+`kero events` 会在会话和窗格发生变化时立即打印出来，每个事件一行，直到你停止它。脚本可以借此同时跟踪所有智能体，而不必轮询 `kero status`。
+
+```sh
+kero events                               # 所有会话
+kero events api                           # 一个会话，或一个窗格
+kero events -p kero                       # 一个项目的会话
+kero events --for waiting,error           # 只看进入这些状态的窗格
+kero events --json | jq -r .name          # 每行一个 JSON 对象
+kero events --for waiting --once          # 第一个事件之后就退出
+```
+
+```
+12:04:31  api x78n9ss  working → waiting  Allow Bash: rm -rf dist?
+12:04:40  api  renamed api → backend
+```
+
+| 事件 | 何时 | 字段 |
+| --- | --- | --- |
+| `pane.status` | 窗格的状态改变 | `pane`、`from`、`to`、`message`、`kind`、`agent`；变为 exited 时还有 `exitCode` |
+| `command.exited` | 窗格启动时所带的命令结束，shell 继续运行 | `pane`、`exitCode` |
+| `pane.created`、`pane.closed` | 窗格启动或关闭 | `pane` |
+| `session.created`、`session.closed` | 会话启动或关闭 | |
+| `session.renamed` | 会话改名 | `from`、`to` |
+| `session.moved` | 会话移到另一个项目 | `from`、`to`（项目的 ID） |
+| `notice` | 会话中的程序发出桌面通知 | `pane`、`title`、`body` |
+
+加上 `--json` 时，每个事件还带有 `event`、`time`（unix 毫秒）、`session`、`project` 和 `name`（会话在侧边栏中显示的名字）。
+
+`kero events` 只报告从现在开始的变化；已有的内容请用 `kero ls --json` 查看。指定目标时，目标关闭后它就会停止。`--once` 在第一个匹配的事件之后退出；如果目标先关闭或超过 `--timeout`，则以 `1` 退出。kerod 在状态稳定后才发送它，所以只持续一瞬间的状态（比如短暂的工作中）可能不会出现。
+
 <a id="browsing"></a>
 ## 浏览网页
 

@@ -33,12 +33,19 @@ func (d *Daemon) call(c *controlConn, method string, raw json.RawMessage) (any, 
 	case "state":
 		return d.state(), nil
 
-	case "subscribe":
+	case "subscribe", "watch":
+		// A watcher, as kero events, hears what an app does but is no app
+		// (Daemon.watchers). The first state goes out under the lock the
+		// later ones do, so none of them comes before it.
 		d.mu.Lock()
-		d.subs[c] = struct{}{}
-		d.mu.Unlock()
-		st := d.state()
+		if method == "watch" {
+			d.watchers[c] = struct{}{}
+		} else {
+			d.subs[c] = struct{}{}
+		}
+		st := d.stateLocked()
 		c.event(proto.Message{Event: "state", State: &st})
+		d.mu.Unlock()
 		return true, nil
 
 	case "create", "split":
