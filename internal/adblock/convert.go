@@ -306,7 +306,7 @@ func (c *converter) finish() {
 		trigger   Trigger
 		selectors []string
 	}
-	var order []string
+	var order []*group
 	groups := map[string]*group{}
 	add := func(t Trigger, selector string) {
 		key, _ := json.Marshal(t)
@@ -316,12 +316,9 @@ func (c *converter) finish() {
 		}
 		g := groups[k]
 		if g == nil || len(g.selectors) == selectorsPerRule {
-			if g != nil {
-				k += "\x00" + selector
-			}
 			g = &group{trigger: t}
 			groups[k] = g
-			order = append(order, k)
+			order = append(order, g)
 		}
 		g.selectors = append(g.selectors, selector)
 	}
@@ -344,8 +341,7 @@ func (c *converter) finish() {
 			add(Trigger{URLFilter: ".*", IfDomain: slices.Compact(domains)}, sel)
 		}
 	}
-	for _, k := range order {
-		g := groups[k]
+	for _, g := range order {
 		c.Hide = append(c.Hide, Rule{Trigger: g.trigger, Action: Action{Type: "css-display-none", Selector: strings.Join(g.selectors, ", ")}})
 	}
 	c.hides, c.selectors = nil, nil
