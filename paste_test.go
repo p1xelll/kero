@@ -135,8 +135,13 @@ func TestPasteImageAsPath(t *testing.T) {
 	if b, err := os.ReadFile(files[0]); err != nil || !bytes.Equal(b, fakePNG) {
 		t.Errorf("the file holds %q (%v), want the image", b, err)
 	}
-	if st, err := os.Stat(dir); err != nil || st.Mode().Perm()&0o077 != 0 {
-		t.Errorf("directory %v (%v) is open to others", st, err)
+	st, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Windows directory access uses ACLs, not Unix permission bits.
+	if runtime.GOOS != "windows" && st.Mode().Perm()&0o077 != 0 {
+		t.Errorf("directory %s mode = %v, want no group or other permissions", dir, st.Mode())
 	}
 	if got := sink.written(t); got != files[0] {
 		t.Errorf("the program got %q, want the path %q", got, files[0])
