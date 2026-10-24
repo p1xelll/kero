@@ -96,6 +96,7 @@ func localAPI(ctx context.Context, path string, v any) error {
 			var d net.Dialer
 			return d.DialContext(ctx, "unix", sock)
 		}}}
+		defer c.CloseIdleConnections()
 		req, _ := http.NewRequestWithContext(ctx, "GET", "http://local-tailscaled.sock/localapi/v0/"+path, nil)
 		resp, err := c.Do(req)
 		if err == nil {
