@@ -34,7 +34,7 @@ import (
 const PublicKey = "WzJsOGNIuf6mcEqo5ff8jub+NoQQOEk4JXreLPYjgyQ="
 
 // Repo is the GitHub repository of Kero's releases.
-const Repo = "egoist/kero"
+const Repo = "smallnest/kero"
 
 // maxArchive bounds an archive's download.
 const maxArchive = 256 << 20

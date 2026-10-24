@@ -5,6 +5,27 @@ A release is a tag: pushing `vX.Y.Z` runs the Release workflow
 and Linux, the server build for each platform, runs the tests, and leaves
 it all in a draft release. Publishing the draft releases it.
 
+Kero's releases are those of `smallnest/kero`, the repository `mygo.json`
+(`updates.github`), `internal/update` (`Repo`) and the install scripts
+name. Push the tag there.
+
+## Before the first release
+
+The Release workflow needs these repository secrets. Without them, the
+macOS job stops at the import of the certificate, and the server build
+ships unsigned, which the server build refuses to update from.
+
+- `MACOS_CERTIFICATE` and `MACOS_CERTIFICATE_PASSWORD`: the Developer ID
+  certificate as base64, and its password.
+- `APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD`: for notarization.
+- `MYGO_UPDATER_PRIVATE_KEY`: the key of `mygo keygen`, whose public half
+  is `mygo.json`'s `updates.publicKey`. The same key signs the app's
+  updates and the server build's archives.
+
+`mygo.json`'s `macos.signingIdentity` names the certificate the app is
+signed with. It must be the Developer ID of the team above, or the
+notarization fails.
+
 ## Steps
 
 1. Pick the version: a patch (2.1.4 → 2.1.5) for fixes and small
