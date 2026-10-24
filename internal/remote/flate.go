@@ -49,6 +49,7 @@ func (c *flateConn) Write(p []byte) (int, error) {
 }
 
 func (c *flateConn) Close() error {
-	c.r.Close()
+	// flate.Close only reads decoder state, which may still be changing in Read.
+	// Closing the transport interrupts Read without touching that state.
 	return c.rwc.Close()
 }
