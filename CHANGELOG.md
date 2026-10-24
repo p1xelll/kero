@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.1.14
+
+- The side panel has a **Files** view beside **Changes**: a tree of the
+  session's folder, each file opening under it as its text, with syntax
+  highlighting, or as its image. It lists folders on the session's own
+  computer, a remote host's as easily as this one's, and hides `.git`.
+- **Open in a File Pane** shows a file of the Files view in a pane of its
+  own, in the app's editor, colored by its language. The pane comes back
+  after a restart, as a browser pane does. **Open in the Host's Editor**
+  still runs `$EDITOR` for the files an editor reads better than a view.
+- The panel's tabs switch on a click again: a click started a drag of the
+  window.
+- **View › Toggle Side Panel** (⇧⌘E, Ctrl+Shift+E on Windows and Linux)
+  opens the panel on the view you saw last, and closes it. **Toggle
+  Files** (⌥⌘F, Ctrl+Alt+F) goes straight to Files.
+
 ## 2.1.13
 
 This is smallnest's fork of Kero. It has these changes on top of 2.1.12:
