@@ -6,13 +6,14 @@ upstream releases it includes follow its own.
 
 ## 2.1.18
 
-Not released yet.
-
-- A row above the tree sets what a click on a file of the Files view
-  does: show it under the tree, open it in a file pane with the app's
-  editor, or open it in the host's editor.
-- This release takes in upstream's 2.1.15 to 2.1.17, whose notes follow
-  this fork's own.
+- A row above the tree of the **Files** view picks what a click on a
+  file does: show it under the tree, open it in a file pane with Kero's
+  editor and its syntax highlighting, or open it in the host's editor.
+  Kero keeps the choice.
+- This release takes in upstream's 2.1.15 to 2.1.17, whose notes follow:
+  Kero's icon in the menu bar and the menu it opens, `kero events`, the
+  browser's snapshots and saved cookies, programs that can ask for the
+  microphone and the camera, and Japanese.
 
 ## 2.1.14 (smallnest/kero)
 
