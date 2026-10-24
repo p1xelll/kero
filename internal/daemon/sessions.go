@@ -323,6 +323,7 @@ func (d *Daemon) split(p proto.CreateParams) (proto.Session, error) {
 		d.mu.Unlock()
 		return proto.Session{}, fmt.Errorf("no session or pane %q", p.Split)
 	}
+	at.mu.Lock()
 	dir := at.info.Dir
 	if p.Cols == 0 {
 		// Half of the pane split, as a start: the view sets the size.
@@ -334,6 +335,7 @@ func (d *Daemon) split(p proto.CreateParams) (proto.Session, error) {
 		}
 	}
 	sid, atID := s.id, at.info.ID
+	at.mu.Unlock()
 	d.mu.Unlock()
 	if p.Dir != "" {
 		var err error

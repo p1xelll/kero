@@ -204,11 +204,13 @@ func (c *Client) Close() error { return c.conn.Close() }
 func (c *Client) read(r *bufio.Reader) {
 	defer func() {
 		c.mu.Lock()
+		c.err = errors.New("kerod went away")
 		for id, ch := range c.pending {
-			ch <- response{err: errors.New("kerod went away")}
+			ch <- response{err: c.err}
 			delete(c.pending, id)
 		}
 		c.mu.Unlock()
+		c.conn.Close() // unblock a Call still writing when the reader ended
 		close(c.closed)
 	}()
 	for {
@@ -255,6 +257,11 @@ func (c *Client) read(r *bufio.Reader) {
 func (c *Client) Call(method string, params, out any) error {
 	ch := make(chan response, 1)
 	c.mu.Lock()
+	if c.err != nil {
+		err := c.err
+		c.mu.Unlock()
+		return err
+	}
 	c.nextID++
 	id := c.nextID
 	c.pending[id] = ch

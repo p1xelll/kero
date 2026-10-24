@@ -135,11 +135,18 @@ func TestPasteImageAsPath(t *testing.T) {
 	if b, err := os.ReadFile(files[0]); err != nil || !bytes.Equal(b, fakePNG) {
 		t.Errorf("the file holds %q (%v), want the image", b, err)
 	}
-	if st, err := os.Stat(dir); err != nil || st.Mode().Perm()&0o077 != 0 {
-		t.Errorf("directory %v (%v) is open to others", st, err)
+	st, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if got := sink.written(t); got != files[0] {
-		t.Errorf("the program got %q, want the path %q", got, files[0])
+	// Windows directory access uses ACLs, not Unix permission bits.
+	if runtime.GOOS != "windows" && st.Mode().Perm()&0o077 != 0 {
+		t.Errorf("directory %s mode = %v, want no group or other permissions", dir, st.Mode())
+	}
+	// The runner's short home name (RUNNER~1) holds a ~, which
+	// quotePath quotes: expect the path as the app pastes it.
+	if got, want := sink.written(t), quotePath(runtime.GOOS, a.paneShell("a"), files[0]); got != want {
+		t.Errorf("the program got %q, want the pasted path %q", got, want)
 	}
 	if a.pendingToast != "" {
 		t.Errorf("toast %q", a.pendingToast)
@@ -158,7 +165,7 @@ func TestPasteImageBracketed(t *testing.T) {
 	if len(files) != 1 {
 		t.Fatalf("pasted files %q, want one", files)
 	}
-	if got, want := sink.written(t), "\x1b[200~"+files[0]+"\x1b[201~"; got != want {
+	if got, want := sink.written(t), "\x1b[200~"+quotePath(runtime.GOOS, a.paneShell("a"), files[0])+"\x1b[201~"; got != want {
 		t.Errorf("the program got %q, want %q", got, want)
 	}
 }
@@ -310,7 +317,7 @@ func TestPasteImageByKeys(t *testing.T) {
 	if len(files) != 1 {
 		t.Fatalf("%s+V: pasted files %q, want one", name, files)
 	}
-	if got, want := sink.written(t), "\x1b[200~"+files[0]+"\x1b[201~"; got != want {
+	if got, want := sink.written(t), "\x1b[200~"+quotePath(runtime.GOOS, a.paneShell("a"), files[0])+"\x1b[201~"; got != want {
 		t.Errorf("%s+V: the program got %q, want %q", name, got, want)
 	}
 	// Text still pastes as text.
@@ -396,7 +403,11 @@ func TestPasteImageError(t *testing.T) {
 		{"permission", &fs.PathError{Op: "mkdir", Path: dir, Err: syscall.EACCES}, []string{"can’t write to " + dir, "drop the image file"}},
 		{"permission wrapped", fmt.Errorf("x: %w", fs.ErrPermission), []string{"can’t write to " + dir}},
 		{"disk full", &fs.PathError{Op: "write", Path: dir, Err: syscall.ENOSPC}, []string{"disk is full", "Free some space"}},
-		{"other", &fs.PathError{Op: "mkdir", Path: dir, Err: syscall.ENOTDIR}, []string{"not a directory", "drop the image file"}},
+		// Each platform words ENOTDIR its own way; the toast repeats
+		// the system's wording for a cause the user cannot mend.
+		// Each platform words ENOTDIR its own way, and the toast repeats
+		// the system's wording for a cause the user cannot mend.
+		{"other", &fs.PathError{Op: "mkdir", Path: dir, Err: syscall.ENOTDIR}, []string{syscall.ENOTDIR.Error(), "drop the image file"}},
 	}
 	for _, c := range cases {
 		got := pasteImageError(c.err, dir)
@@ -433,8 +444,10 @@ func TestPasteImageOtherTypes(t *testing.T) {
 	if b, _ := os.ReadFile(files[0]); !bytes.Equal(b, []byte("\xff\xd8JPEG")) {
 		t.Errorf("the file holds %q", b)
 	}
-	if got := sink.written(t); got != files[0] {
-		t.Errorf("the program got %q, want %q", got, files[0])
+	// The runner's short home name (RUNNER~1) holds a ~, which
+	// quotePath quotes: expect the path as the app pastes it.
+	if got, want := sink.written(t), quotePath(runtime.GOOS, a.paneShell("a"), files[0]); got != want {
+		t.Errorf("the program got %q, want the pasted path %q", got, want)
 	}
 	both := transfer.New(transfer.NewItem(
 		transfer.Bytes("image/jpeg", []byte("JPEG")), transfer.Bytes(transfer.PNG, fakePNG)))

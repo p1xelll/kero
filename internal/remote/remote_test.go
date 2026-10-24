@@ -69,8 +69,8 @@ func TestBridgeCommandQuotes(t *testing.T) {
 		t.Errorf("ssh %q: the host must follow --", args)
 	}
 	// cmd runs the command of sh as far as it says it has no sh, before
-	// which it would act on its characters.
-	if c := bridgeCommand(Addr{Scheme: "ssh", Host: "x"}, ""); strings.ContainsAny(c, `"<>|&%^`) {
+	// which it would act on command-control characters, even inside single quotes.
+	if c := bridgeCommand(Addr{Scheme: "ssh", Host: "x"}, ""); strings.ContainsAny(c, `<>|&%^`) {
 		t.Errorf("cmd would read %s", c)
 	}
 	// cmd /c takes the quotes off a command that starts with one, and the
@@ -463,29 +463,110 @@ func TestBridgeScript(t *testing.T) {
 		t.Skip(err)
 	}
 	home := t.TempDir()
-	kero := filepath.Join(home, "Library/Application Support/kero/bin/kero")
-	os.MkdirAll(filepath.Dir(kero), 0o755)
-	os.WriteFile(kero, []byte("#!/bin/sh\necho \"$0 $*\"\n"), 0o755)
+	kero := filepath.Join(home, `it's $HOME; $(: > injected) & [kero]`, "kero")
+	if err := os.MkdirAll(filepath.Dir(kero), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(kero, []byte("#!/bin/sh\nprintf '%s\\n' \"$0\" \"$@\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	script := bridgeScript(Addr{Scheme: "ssh", Host: "x", Kero: kero}, "ssh")
 	cmd := exec.Command(sh, "-c", script)
+	cmd.Dir = home
 	cmd.Env = []string{"HOME=" + home, "PATH=" + home + "/none"}
 	out, err := cmd.Output()
-	if want := kero + " __bridge --via ssh\n"; err != nil || string(out) != want {
+	if want := kero + "\n__bridge\n--via\nssh\n"; err != nil || string(out) != want {
 		t.Errorf("%q, %v; want %q", out, err, want)
+	}
+	if _, err := os.Stat(filepath.Join(home, "injected")); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("bridgeScript(explicit path) injection marker: %v, want not exist", err)
 	}
 }
 
-// The script of a bridge that looks for kero names each path of the
-// bridge, and no colon of IFS, which a sh of bash splits no list at.
+// Default HOME paths expand without splitting spaces or interpreting the
+// contents of HOME, even when the host's PATH has no kero.
 func TestBridgeScriptLocations(t *testing.T) {
-	script := bridgeScript(Addr{Scheme: "ssh", Host: "x"}, "ssh")
-	for _, l := range BridgeLocations {
-		if !strings.Contains(script, shellQuote(l)) {
-			t.Errorf("the script does not look in %q: %s", l, script)
-		}
+	if runtime.GOOS == "windows" {
+		t.Skip("sh of Windows takes no Unix paths")
 	}
-	if strings.Contains(script, "IFS=") {
-		t.Errorf("the script splits its paths at a colon: %s", script)
+	sh, err := exec.LookPath("sh")
+	if err != nil {
+		t.Skip(err)
+	}
+	for _, l := range BridgeLocations {
+		suffix, ok := strings.CutPrefix(l, "$HOME/")
+		if !ok {
+			continue
+		}
+		t.Run(suffix, func(t *testing.T) {
+			root := t.TempDir()
+			home := filepath.Join(root, `home with spaces ' $(: > injected)`)
+			kero := filepath.Join(home, suffix)
+			if err := os.MkdirAll(filepath.Dir(kero), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(kero, []byte("#!/bin/sh\nprintf '%s\\n' \"$0\" \"$@\"\n"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			// Isolate this default from any kero installed on the test host.
+			old := BridgeLocations
+			BridgeLocations = []string{l}
+			t.Cleanup(func() { BridgeLocations = old })
+			cmd := exec.Command(sh, "-c", bridgeScript(Addr{}, "ssh"))
+			cmd.Dir = root
+			cmd.Env = []string{"HOME=" + home, "PATH=" + root + "/none"}
+			out, err := cmd.CombinedOutput()
+			if want := kero + "\n__bridge\n--via\nssh\n"; err != nil || string(out) != want {
+				t.Errorf("bridgeScript(%q) = %q, %v, want %q, nil", l, out, err, want)
+			}
+			if _, err := os.Stat(filepath.Join(root, "injected")); !errors.Is(err, os.ErrNotExist) {
+				t.Errorf("bridgeScript(%q) injection marker: %v, want not exist", l, err)
+			}
+		})
+	}
+}
+
+func TestBridgeCommandHomeLookup(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("sh of Windows takes no Unix paths")
+	}
+	sh, err := exec.LookPath("sh")
+	if err != nil {
+		t.Skip(err)
+	}
+	root := t.TempDir()
+	home := filepath.Join(root, "home with spaces")
+	kero := filepath.Join(home, ".local/bin/kero")
+	if err := os.MkdirAll(filepath.Dir(kero), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(kero, []byte("#!/bin/sh\nprintf '%s\\n' \"$0\" \"$@\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	bin := filepath.Join(root, "bin")
+	if err := os.Mkdir(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(sh, filepath.Join(bin, "sh")); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"sh", "bash", "zsh", "csh", "fish"} {
+		t.Run(name, func(t *testing.T) {
+			shell, err := exec.LookPath(name)
+			if err != nil {
+				t.Skip(err)
+			}
+			flags := "-f"
+			if name == "fish" {
+				flags = "--no-config"
+			}
+			cmd := exec.Command(shell, flags, "-c", bridgeCommand(Addr{}, ""))
+			cmd.Env = []string{"HOME=" + home, "PATH=" + bin}
+			out, err := cmd.CombinedOutput()
+			if want := kero + "\n__bridge\n--via\nssh\n"; err != nil || string(out) != want {
+				t.Errorf("%s bridgeCommand() = %q, %v, want %q, nil", name, out, err, want)
+			}
+		})
 	}
 }
 

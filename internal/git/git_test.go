@@ -173,17 +173,29 @@ func TestBranchBase(t *testing.T) {
 func TestWrite(t *testing.T) {
 	r := repo(t, map[string]string{"a.txt": "a\n"})
 	full := filepath.Join(r.Root, "a.txt")
-	os.Chmod(full, 0o755)
+	if err := os.Chmod(full, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.Stat(full)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := r.Write("a.txt", Hash([]byte("not it")), "x\n"); err != ErrChanged {
 		t.Errorf("a stale write: %v", err)
 	}
 	if err := r.Write("a.txt", Hash([]byte("a\n")), "b\n"); err != nil {
 		t.Fatal(err)
 	}
-	b, _ := os.ReadFile(full)
-	fi, _ := os.Stat(full)
-	if string(b) != "b\n" || fi.Mode().Perm() != 0o755 {
-		t.Errorf("wrote %q, mode %v", b, fi.Mode())
+	b, err := os.ReadFile(full)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fi, err := os.Stat(full)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(b) != "b\n" || fi.Mode().Perm() != before.Mode().Perm() {
+		t.Errorf("Write(a.txt) = %q, mode %v; want b\\n and mode %v", b, fi.Mode(), before.Mode())
 	}
 }
 

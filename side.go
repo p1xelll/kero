@@ -289,16 +289,17 @@ func (a *App) changesDir(s *proto.Session) string {
 }
 
 // changesScope names what the Changes view lists for a pane since a
-// base: its worktree's changes, or its turn's, which the list, its files'
-// diffs, folds and scroll position are kept by.
-func changesScope(p *proto.Pane, base string) string {
+// base: its host's worktree's changes, or its turn's, which the list, its
+// files' diffs, folds and scroll position are kept by.
+func (a *App) changesScope(p *proto.Pane, base string) string {
+	host := a.hostOf(p.ID).name + "\x00"
 	if base == git.BaseTurn && p.Turn != nil {
-		return p.Turn.Root + "|" + p.Turn.Tree + "|" + base
+		return host + p.Turn.Root + "|" + p.Turn.Tree + "|" + base
 	}
 	if p.Git != nil {
-		return p.Git.Root + "|" + base
+		return host + p.Git.Root + "|" + base
 	}
-	return p.ID + "|" + base
+	return host + p.ID + "|" + base
 }
 
 // gitStamp is what of a worktree's status changes its changes.
@@ -343,7 +344,7 @@ func (a *App) changesView(c *ui.Context, pal *palette, s *proto.Session, width f
 	// The list is of a worktree, not of a pane: the panes the user moves
 	// between in one show it as it was, scrolled where it was. A turn's is
 	// of its snapshot.
-	scope := changesScope(pane, ch.base)
+	scope := a.changesScope(pane, ch.base)
 	stamp := gitStamp(pane.Git)
 	if pane.Turn != nil && ch.base == git.BaseTurn {
 		stamp += "|" + pane.Turn.Tree
@@ -514,8 +515,21 @@ const (
 // changed), or of every one as the worktree's HEAD moves.
 func (a *App) syncFiles(c *ui.Context, scope string, pane *proto.Pane, files []proto.GitFile) {
 	ch := &a.side.changes
-	if ch.files == nil || len(ch.files) > 400 {
+	if ch.files == nil {
 		ch.files = map[string]*sideFile{}
+	}
+	if len(ch.files) > 400 {
+		current := make(map[string]bool, len(files))
+		for _, f := range files {
+			current[scope+"|"+f.Path] = true
+		}
+		for key, sf := range ch.files {
+			// Pending work stays even across scopes, so returning cannot
+			// start another fetch or write for the same entry.
+			if !current[key] && !sf.busy && !sf.writing {
+				delete(ch.files, key)
+			}
+		}
 	}
 	stamp := gitStamp(pane.Git)
 	asking := 0

@@ -105,8 +105,16 @@ func skillCmd(args []string) error {
 	if len(f.pos) > 0 {
 		sub = f.pos[0]
 	}
-	agent := strings.ToLower(f.vals["agent"])
-	dirs, hooks := skillDirs(agent), hooksFor(agent)
+	if len(f.pos) > 1 || len(f.rest) > 0 {
+		return usageErr("unexpected arguments for kero skill %s; select agents with --agent", sub)
+	}
+	agent, explicit := f.vals["agent"]
+	agent = strings.ToLower(agent)
+	dirs := skillDirs(agent)
+	if len(dirs) == 0 || explicit && agent == "" {
+		return usageErr("unknown agent %q", agent)
+	}
+	hooks := hooksFor(agent)
 	switch sub {
 	case "show":
 		fmt.Print(skillGuide)
@@ -226,6 +234,7 @@ func skillDirs(agent string) map[string]string {
 		if agent == "codex" || agent == "opencode" || agent == "pi" {
 			return map[string]string{"agents": all["agents"]}
 		}
+		return nil
 	}
 	return all
 }

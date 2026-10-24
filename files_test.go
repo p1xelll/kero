@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"
@@ -109,14 +110,16 @@ func TestFileOpenChoice(t *testing.T) {
 	}
 
 	// A file pane, once chosen, splits the tree's pane on the file.
-	var called proto.CreateParams
+	requests := make(chan proto.CreateParams, 1)
 	a.local().cl, _ = projectClient(t, func(method string, raw json.RawMessage) (any, error) {
 		if method != "split" {
 			return nil, errors.New("not in a test")
 		}
+		var called proto.CreateParams
 		if err := json.Unmarshal(raw, &called); err != nil {
 			return nil, err
 		}
+		requests <- called
 		return s, nil
 	})
 	// The row still shows with the file under the tree: the file pane
@@ -130,12 +133,20 @@ func TestFileOpenChoice(t *testing.T) {
 		t.Fatalf("the choice is %q, want pane", a.prefs.FileOpen)
 	}
 	a.chooseFile(tree, "/tmp/demo/main.go")
-	// The call runs on the app's own goroutine; a frame lands it.
-	for i := 0; i < 100 && called.File == ""; i++ {
-		tt.Frame()
-	}
-	if called.File != "/tmp/demo/main.go" || called.Split != tree.pane {
-		t.Errorf("split %+v, want a file pane on main.go beside %s", called, tree.pane)
+	deadline := time.NewTimer(5 * time.Second)
+	defer deadline.Stop()
+	for {
+		select {
+		case called := <-requests:
+			if called.File != "/tmp/demo/main.go" || called.Split != tree.pane {
+				t.Errorf("split %+v, want a file pane on main.go beside %s", called, tree.pane)
+			}
+			return
+		case <-deadline.C:
+			t.Fatal("chooseFile(main.go) did not request a split within 5s")
+		default:
+			tt.Frame()
+		}
 	}
 }
 

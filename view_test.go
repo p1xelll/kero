@@ -884,36 +884,43 @@ func TestProjectOrder(t *testing.T) {
 	}
 }
 
-// A project's name dragged onto another project's lower half puts it
-// after that project.
+// A project's name dragged onto another project goes before or after it
+// according to the vertical half, independently of the horizontal position.
 func TestProjectDrag(t *testing.T) {
-	a := testApp(t)
-	a.st.Projects = append(a.st.Projects, proto.Project{ID: "p2", Name: "two"})
-	tt := ui.NewTester(a.view, 1100, 640)
-	tt.Frame()
-	src, ok := tt.Find("demo")
-	if !ok {
-		t.Fatalf("no demo project; texts %q", tt.Texts())
-	}
-	dst, ok := tt.Find("two")
-	if !ok {
-		t.Fatalf("no two project; texts %q", tt.Texts())
-	}
-	tt.Press(src.X+10, src.Y+src.H/2)
-	for i := 1; i <= 10; i++ {
-		f := float32(i) / 10
-		x := src.X + 10
-		y := src.Y + src.H/2 + (dst.Y+dst.H-4-src.Y-src.H/2)*f
-		tt.Move(x, y)
-		tt.Advance(16 * time.Millisecond)
-		tt.Frame()
-	}
-	tt.Release(dst.X+10, dst.Y+dst.H-4)
-	tt.Frame()
-	tt.Advance(50 * time.Millisecond)
-	tt.Frame()
-	if !slices.Equal(a.prefs.ProjectOrder, []string{"p2", "p1"}) {
-		t.Errorf("order %v, want p2 then p1", a.prefs.ProjectOrder)
+	for _, half := range []string{"upper", "lower"} {
+		t.Run(half, func(t *testing.T) {
+			a := testApp(t)
+			a.st.Projects = append(a.st.Projects, proto.Project{ID: "p2", Name: "two"})
+			tt := ui.NewTester(a.view, 1100, 640)
+			tt.Frame()
+			src, ok := tt.Find("demo")
+			if !ok {
+				t.Fatalf("no demo project; texts %q", tt.Texts())
+			}
+			dst, ok := tt.Find("two")
+			if !ok {
+				t.Fatalf("no two project; texts %q", tt.Texts())
+			}
+			targetY, want := dst.Y, []string{"p1", "p2"}
+			if half == "lower" {
+				targetY, want = dst.Y+dst.H-4, []string{"p2", "p1"}
+			}
+			tt.Press(src.X+10, src.Y+src.H/2)
+			for i := 1; i <= 10; i++ {
+				f := float32(i) / 10
+				y := src.Y + src.H/2 + (targetY-src.Y-src.H/2)*f
+				tt.Move(src.X+10, y)
+				tt.Advance(16 * time.Millisecond)
+				tt.Frame()
+			}
+			tt.Release(src.X+10, targetY)
+			tt.Frame()
+			tt.Advance(50 * time.Millisecond)
+			tt.Frame()
+			if !slices.Equal(a.prefs.ProjectOrder, want) {
+				t.Errorf("drop in %s half order = %v, want %v", half, a.prefs.ProjectOrder, want)
+			}
+		})
 	}
 }
 
