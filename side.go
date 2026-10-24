@@ -515,8 +515,21 @@ const (
 // changed), or of every one as the worktree's HEAD moves.
 func (a *App) syncFiles(c *ui.Context, scope string, pane *proto.Pane, files []proto.GitFile) {
 	ch := &a.side.changes
-	if ch.files == nil || len(ch.files) > 400 {
+	if ch.files == nil {
 		ch.files = map[string]*sideFile{}
+	}
+	if len(ch.files) > 400 {
+		current := make(map[string]bool, len(files))
+		for _, f := range files {
+			current[scope+"|"+f.Path] = true
+		}
+		for key, sf := range ch.files {
+			// Pending work stays even across scopes, so returning cannot
+			// start another fetch or write for the same entry.
+			if !current[key] && !sf.busy && !sf.writing {
+				delete(ch.files, key)
+			}
+		}
 	}
 	stamp := gitStamp(pane.Git)
 	asking := 0
