@@ -95,6 +95,8 @@ func (a *App) run(id string, args map[string]string) {
 		a.toggleSidebar()
 	case "changes.toggle":
 		a.toggleSide(sideChanges)
+	case "files.toggle":
+		a.toggleSide(sideFiles)
 	case "pet.toggle":
 		a.set.Pet = !a.set.Pet
 		a.applySettings(a.set)
@@ -160,6 +162,7 @@ var actionTitles = map[string]func() string{
 	"pane.down":         locales.ActionPaneBelow,
 	"sidebar.toggle":    locales.ActionToggleSidebar,
 	"changes.toggle":    locales.ActionToggleChanges,
+	"files.toggle":      locales.ActionToggleFiles,
 	"pet.toggle":        locales.ActionTogglePet,
 	"text.bigger":       locales.ActionBigger,
 	"text.smaller":      locales.ActionSmaller,
@@ -213,7 +216,7 @@ func (a *App) menu() *mygo.Menu {
 			{Label: locales.MenuQuit(), Accelerator: quitKeys, ToolTip: locales.MenuQuitTip(), Click: func(*mygo.MenuItem, *mygo.Window) { mygo.App.Quit() }},
 			a.item("app.quitAll")}}
 	}
-	view := append(a.items("View", []string{"sidebar.toggle", "changes.toggle", "pet.toggle"}, []string{"text.bigger", "text.smaller", "text.reset"}),
+	view := append(a.items("View", []string{"sidebar.toggle", "changes.toggle", "files.toggle", "pet.toggle"}, []string{"text.bigger", "text.smaller", "text.reset"}),
 		mygo.Separator(), &mygo.MenuItem{Role: mygo.RoleToggleFullScreen}, &mygo.MenuItem{Role: mygo.RoleToggleDevTools})
 	return mygo.NewMenu([]*mygo.MenuItem{
 		kero,
@@ -298,7 +301,7 @@ func (a *App) fromMay(id string, args map[string]string) bool {
 	case id == "session.new" || id == "session.newHome":
 		p := args["project"]
 		return p == "" || a.hostOf(p) == h
-	case strings.HasPrefix(id, "pane.") || id == "changes.toggle":
+	case strings.HasPrefix(id, "pane.") || id == "changes.toggle" || id == "files.toggle":
 		return a.session(a.selected) != nil && a.selectedHost() == h
 	}
 	return true
