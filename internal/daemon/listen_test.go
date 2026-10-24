@@ -31,7 +31,9 @@ type fakeTailscale struct {
 
 func (f *fakeTailscale) serve(t *testing.T) {
 	t.Helper()
-	sock := filepath.Join(t.TempDir(), "tailscaled.sock")
+	// Relative paths avoid Unix socket limits even when TMPDIR is long.
+	t.Chdir(t.TempDir())
+	const sock = "tailscaled.sock"
 	ln, err := net.Listen("unix", sock)
 	if err != nil {
 		t.Skipf("no Unix sockets: %v", err)
@@ -53,7 +55,10 @@ func (f *fakeTailscale) serve(t *testing.T) {
 	})
 	srv := &http.Server{Handler: mux}
 	go srv.Serve(ln)
-	t.Cleanup(func() { srv.Close() })
+	t.Cleanup(func() {
+		srv.Close()
+		ln.Close() // Serve may not have registered the listener before cleanup.
+	})
 }
 
 func (f *fakeTailscale) set(who string) {
@@ -63,6 +68,10 @@ func (f *fakeTailscale) set(who string) {
 }
 
 func listenDaemon(t *testing.T) *Daemon {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("KERO_HOME", home)
+	t.Setenv("KERO_CONFIG", filepath.Join(home, "config"))
 	d := &Daemon{
 		log: log.New(io.Discard, "", 0), started: time.Now(),
 		subs: map[*controlConn]struct{}{}, clients: map[*proto.ClientInfo]struct{}{}, panes: map[string]*pane{},
