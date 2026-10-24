@@ -12,6 +12,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -23,6 +24,10 @@ jobs:
         run: go test ./internal/...
       - name: Test the app without native UI
         run: CGO_ENABLED=0 go test .
+      - name: Test with the race detector
+        env:
+          CGO_ENABLED: "1"
+        run: go test -race -v -count=1 -timeout=10m ./...
       - name: Build for every platform
         run: |
           set -eu
@@ -35,6 +40,20 @@ jobs:
           sh -n scripts/install-server.sh
           sh -n scripts/build-server.sh
           pwsh -NoProfile -Command '$e = $null; [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path scripts/install-server.ps1), [ref]$null, [ref]$e) | Out-Null; if ($e) { $e; exit 1 }'
+
+  windows:
+    name: Test (Windows amd64)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Test without native UI
+        run: go test -v -count=1 -timeout=10m ./...
 
   # The server build, built and run on each of its platforms.
   server:
