@@ -150,6 +150,7 @@ func TestHookRefusesBadSettings(t *testing.T) {
 func TestAgentPlugins(t *testing.T) {
 	home := filepath.Join(t.TempDir(), "agent home & plugins")
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("KERO_HOME", filepath.Join(home, "kero"))
 	for _, env := range []string{"CLAUDE_CONFIG_DIR", "CODEX_HOME", "PI_CODING_AGENT_DIR", "XDG_CONFIG_HOME"} {
 		t.Setenv(env, "")
