@@ -15,6 +15,14 @@ Run Claude Code, Codex, a dev server or a test watcher each in its own session. 
 
 Download Kero from the [releases page](https://github.com/smallnest/kero/releases), then choose **Kero › Install Command Line Tool…** to put `kero` on your `PATH`.
 
+> **On macOS, the app is not signed with an Apple Developer ID.** The first time you open it, Control-click (or right-click) **Kero.app** and choose **Open**, then confirm. If macOS still refuses, run:
+>
+> ```sh
+> xattr -d com.apple.quarantine /Applications/Kero.app
+> ```
+>
+> Apps installed from the earlier `egoist/kero` releases do not update to these releases on their own: install one of these once.
+
 ```sh
 kero new -n fix-login -- claude
 ```

@@ -59,6 +59,16 @@ Kero here releases as `smallnest/kero`: `mygo.json` `updates.github`,
 Do not change them back to `egoist/kero`. The old releases app updates
 from `egoist/kero`; new builds update from `smallnest/kero`.
 
+## Signing and the update key
+
+There is no Apple Developer ID. macOS builds are ad-hoc signed (an
+`xattr -d com.apple.quarantine` for a user who downloads one), and no
+release takes a certificate or notarization.
+
+`~/.kero-release-keys/mygo-update.key` signs updates; its public half is
+`mygo.json`'s `updates.publicKey`. Never commit the secret, and never
+replace the pair: every installed app trusts only that public key.
+
 ## Checks before a push
 
 ```sh

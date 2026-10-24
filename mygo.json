@@ -8,13 +8,10 @@
     "source": "en"
   },
   "updates": {
-    "publicKey": "WzJsOGNIuf6mcEqo5ff8jub+NoQQOEk4JXreLPYjgyQ=",
+    "publicKey": "CJGqv/HGMyORlUKh5NCvwLOb3p9Fblp1d3oj8qDMQ30=",
     "github": "smallnest/kero"
   },
   "macos": {
-    "signingIdentity": "Developer ID Application: xinyu zeng (GJE9R5VE87)",
-    "notarize": {
-      "keychainProfile": "NOTARY"
-    }
+    "signingIdentity": "-"
   }
 }

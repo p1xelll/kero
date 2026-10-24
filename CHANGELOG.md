@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.13-smallnest
+## 2.1.13
 
 This is smallnest's fork of Kero. It has these changes on top of 2.1.12:
 

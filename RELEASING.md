@@ -9,22 +9,30 @@ Kero's releases are those of `smallnest/kero`, the repository `mygo.json`
 (`updates.github`), `internal/update` (`Repo`) and the install scripts
 name. Push the tag there.
 
-## Before the first release
+## Signing
 
-The Release workflow needs these repository secrets. Without them, the
-macOS job stops at the import of the certificate, and the server build
-ships unsigned, which the server build refuses to update from.
+This fork has no Apple Developer ID, so macOS builds are ad-hoc signed
+(`mygo.json`'s `macos.signingIdentity` is `-`) and not notarized. A user
+who downloads the disk image must Control-click **Kero.app** and choose
+**Open** the first time; `README.md` says so. The Release workflow has
+no certificate or notarization steps.
 
-- `MACOS_CERTIFICATE` and `MACOS_CERTIFICATE_PASSWORD`: the Developer ID
-  certificate as base64, and its password.
-- `APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD`: for notarization.
-- `MYGO_UPDATER_PRIVATE_KEY`: the key of `mygo keygen`, whose public half
-  is `mygo.json`'s `updates.publicKey`. The same key signs the app's
-  updates and the server build's archives.
+The one secret a release needs is `MYGO_UPDATER_PRIVATE_KEY`, the secret
+half of the `mygo keygen` pair whose public half is `mygo.json`'s
+`updates.publicKey`. It signs the app's updates and the server build's
+archives; without it, neither updates. Losing it strands every app that
+already runs this fork's builds.
 
-`mygo.json`'s `macos.signingIdentity` names the certificate the app is
-signed with. It must be the Developer ID of the team above, or the
-notarization fails.
+The key lives at `~/.kero-release-keys/mygo-update.key`, outside the
+repository. Set it on the repository with:
+
+```sh
+gh secret set MYGO_UPDATER_PRIVATE_KEY --repo smallnest/kero < ~/.kero-release-keys/mygo-update.key
+```
+
+Apps installed from `egoist/kero` releases use that repository's key,
+not this one, so they do not update to this fork's releases by
+themselves: their users install one of these releases once.
 
 ## Steps
 
@@ -37,13 +45,13 @@ notarization fails.
    (Settings › Hosts), credit outside contributors (Thanks @name), and
    say when hosts get a change with their next update. Leave out what
    changes nothing a user would notice, and fixes not confirmed to work.
-4. Commit both as `Release X.Y.Z`, tag it `vX.Y.Z`, and push `main` and
+4. Commit both as `Release X.Y.Z`, tag it `vX.Y.Z`, and push `dev` and
    the tag:
 
    ```sh
    git commit -am "Release X.Y.Z"
    git tag vX.Y.Z
-   git push origin main
+   git push origin dev
    git push origin vX.Y.Z
    ```
 
@@ -61,15 +69,16 @@ notarization fails.
    ```
 
    Where `gh` can't edit releases, run the Publish release workflow
-   (`.github/workflows/publish-release.yml`) on `main` instead: it
+   (`.github/workflows/publish-release.yml`) on `dev` instead: it
    publishes the draft of `mygo.json`'s version.
 
    If a job failed, leave the draft unpublished and report what failed.
-   Fixed, the workflow can run again by hand (Run workflow on `main`),
+   Fixed, the workflow can run again by hand (Run workflow on `dev`),
    which replaces the draft and moves the tag to that commit; a
    published release stays as it is.
 
 The tag must match `mygo.json`'s version, or the run stops at its first
-job. Kero is released, so changes keep older apps, kerods and config
+job. Any tag that starts with `v` starts a Release run, so do not tag
+`dev` with a name like `v2.1.12-fork`: the run stops, and it is noise. Kero is released, so changes keep older apps, kerods and config
 files working: `proto.Version` goes up only for a breaking change to the
 protocol, not for a new optional field or frame.
