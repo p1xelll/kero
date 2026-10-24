@@ -217,21 +217,24 @@ func (a *App) sidePanel(c *ui.Context, pal *palette, s *proto.Session, width flo
 }
 
 // sideTab is a view's name in the panel's header, a click showing it: the
-// one shown in the text's color, the others faint. Each drags the window
-// as the header does everywhere else.
+// one shown in the text's color, the others faint. The header drags the
+// window where no tab is, as the window controls are, which the tabs are
+// part of as windowControls' buttons are.
 func (a *App) sideTab(c *ui.Context, pal *palette, id, label string, svg *ui.SVG, on bool, action string, fn func()) {
 	fg := pal.textFaint
 	if on {
 		fg = pal.text
 	}
-	b := ui.Row(c.Key("tab-"+id)).Gap(5).AlignItems(ui.Center).Padding(4, 6).Radius(6).Shrink(0).
-		Cursor(ui.CursorPointer).Tooltip(a.tip(label, action)).DragWindow()
+	b := ui.ButtonBase(c.Key("tab-"+id)).Height(26).Gap(5).Padding(0, 7).Radius(6).AlignItems(ui.Center).Shrink(0).
+		Cursor(ui.CursorPointer).Label(a.tip(label, action))
 	if on {
 		b.Background(pal.chip)
 	} else if b.Hovered() {
 		b.Background(pal.rowHover)
 	}
-	b.OnClick(fn)
+	if b.Clicked() {
+		fn()
+	}
 	b.Children(func() {
 		ui.Icon(c, svg).Size(14, 14).TextColor(fg)
 		ui.Text(c, label).FontSize(14).FontWeight(600).TextColor(fg).SingleLine().Shrink(0)

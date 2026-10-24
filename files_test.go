@@ -167,3 +167,36 @@ func TestSideToggle(t *testing.T) {
 		t.Errorf("files.toggle left the panel open on %q", a.prefs.Side)
 	}
 }
+
+// The header's tabs show their view on a click, each way, so that the
+// header's drag of the window does not keep them.
+func TestSideTabsClick(t *testing.T) {
+	a := testApp(t)
+	s := &a.st.Sessions[0]
+	s.Panes[0].ProcessDir, s.Panes[1].ProcessDir = "/tmp/demo", "/tmp/demo"
+	a.local().cl, _ = projectClient(t, func(method string, raw json.RawMessage) (any, error) {
+		return nil, errors.New("not in a test")
+	})
+	pane, root := a.filesRoot(s)
+	a.tree(pane, root).dirs[root] = &fileDir{paths: []string{"/tmp/demo/main.go"}}
+	a.prefs.Side = sideChanges
+	tt := ui.NewTester(a.view, 1280, 720)
+	tt.Frame()
+	if err := tt.Click("Files"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if a.prefs.Side != sideFiles {
+		t.Fatalf("a click on Files showed %q", a.prefs.Side)
+	}
+	if !tt.HasText("main.go") {
+		t.Errorf("the Files view did not show; texts %q", tt.Texts())
+	}
+	if err := tt.Click("Changes"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if a.prefs.Side != sideChanges {
+		t.Fatalf("a click on Changes showed %q", a.prefs.Side)
+	}
+}
