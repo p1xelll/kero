@@ -154,6 +154,13 @@ func TestConsoleInheritCursor(t *testing.T) {
 			at = c.waitFor(at, regexp.MustCompile(`PS [^\r\n]*>`), "prompt")
 			time.Sleep(200 * time.Millisecond)
 			c.proc.Write([]byte("a"))
+			if name == "system" {
+				// The system console repaints a prediction in place, without
+				// moving the cursor: the prediction's draw itself is the
+				// evidence that the redraw stayed where the prompt is.
+				c.waitFor(at, regexp.MustCompile(`(?:\x1b\[8;\d+H|\x1b\[\?25l\x1b\[\d+(?:;\d+)*ma\x1b\[\?25h)`), "cursor on the prompt's row")
+				return
+			}
 			c.waitFor(at, regexp.MustCompile(`\x1b\[8;\d+H`), "cursor on the prompt's row")
 		})
 	}

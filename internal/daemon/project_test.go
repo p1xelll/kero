@@ -207,11 +207,19 @@ func TestProjectCreateRejectsInvalidSymlinks(t *testing.T) {
 
 func TestProjectCreateNormalizesRelativeDirectory(t *testing.T) {
 	d := projectDaemon(t)
-	dir := t.TempDir()
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Under the working directory, so a relative path to the project
+	// exists even where the temporary directory sits on another volume,
+	// as on the Windows runners, whose repository and TEMP live on
+	// separate drives.
+	dir, err := os.MkdirTemp(cwd, "project-relative-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
 	rel, err := filepath.Rel(cwd, dir)
 	if err != nil {
 		t.Fatal(err)
